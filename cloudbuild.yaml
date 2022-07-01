@@ -1,34 +1,19 @@
-# Copyright 2020 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-# This sample build has exactly one step: build a new container image using this
-# repository as source. Here we use the 'docker' image to build the image and
-# tag it with the name of the image.
 steps:
-- name: 'docker'
-  args: [ 'build', '-t', 'gcr.io/$PROJECT_ID/helloworld-image', '.' ]
-
-# By default, all built docker images will be lost once the build is complete.
-# Rather than writing a build step to push this image, you can simply list the
-# image below and it will automatically be uploaded to Google Cloud Container
-# Registry.
-images:
-- 'gcr.io/$PROJECT_ID/helloworld-image'
-
-# You can organize your builds with tags
-tags: ['gcp-cloud-build-sample-build']
-
-# You can configure more options than the ones listed here. Visit
-# https://cloud.google.com/cloud-build/docs/build-config to see the full list of
-# available options.
+- name: gcr.io/cloud-builders/gsutil
+  args: ['cp', 'gs://${_BUCKET_NAME}/salesforce.key', 'salesforce.key']
+- name: "gcr.io/ordinal-door-351810/salesforcedx-base-image:1"
+  args:
+  - force:auth:jwt:grant
+  - --setdefaultusername
+  - -u
+  - ${_SF_USERNAME}
+  - -f
+  - ./salesforce.key
+  - -i
+  - ${_CONSUMER_KEY}
+- name: "gcr.io/ordinal-door-351810/salesforcedx-base-image:1"
+  args: ['force:source:deploy', '-p', './force-app/']
+substitutions:
+  _BUCKET_NAME: __BUCKET_NAME__
+  _SF_USERNAME: __USERNAME__
+  _CONSUMER_KEY: __CONSUMER_KEY__
